@@ -97,32 +97,33 @@ def train(
     train_state, start_step = train_utils.restore_checkpoint(
         workdir, train_state)
 
-  if (start_step == 0  # Which means "no" checkpoint is restored!
-      and config.get('init_from') is not None):
-    restored_model_cfg = config.init_from.get('model_config')
-    init_checkpoint_path = config.init_from.get('checkpoint_path')
-    checkpoint_format = config.init_from.get('checkpoint_format', 'scenic')
-    if checkpoint_format == 'scenic':
-      restored_train_state = pretrain_utils.restore_pretrained_checkpoint(
-          init_checkpoint_path, train_state, assert_exist=True)
-    elif checkpoint_format == 'big_vision':
-      restored_train_state = pretrain_utils.convert_big_vision_to_scenic_checkpoint(
-          init_checkpoint_path, train_state)
-      # Config dict in big_vision is not the same format as scenic.
-      # Therefore, make sure config match the config of the loaded model!
-      restored_model_cfg = copy.deepcopy(config)
-      # The following is needed when the restored and target models used a
-      # different classifier. As big_vision uses a different config dict, we
-      # have to specify this manually.
-      restored_model_cfg.model.classifier = config.init_from.get(
-          'classifier_type', 'token')
+  # if (start_step == 0  # Which means "no" checkpoint is restored!
+  #     and config.get('init_from') is not None):
+  #   restored_model_cfg = config.init_from.get('model_config')
+  #   init_checkpoint_path = config.init_from.get('checkpoint_path')
+  #   checkpoint_format = config.init_from.get('checkpoint_format', 'scenic')
+  #   if checkpoint_format == 'scenic':
+  #     restored_train_state = pretrain_utils.restore_pretrained_checkpoint(
+  #         init_checkpoint_path, train_state, assert_exist=True)
+  #   elif checkpoint_format == 'big_vision':
+  #     restored_train_state = pretrain_utils.convert_big_vision_to_scenic_checkpoint(
+  #         init_checkpoint_path, train_state)
+  #     # Config dict in big_vision is not the same format as scenic.
+  #     # Therefore, make sure config match the config of the loaded model!
+  #     restored_model_cfg = copy.deepcopy(config)
+  #     # The following is needed when the restored and target models used a
+  #     # different classifier. As big_vision uses a different config dict, we
+  #     # have to specify this manually.
+  #     restored_model_cfg.model.classifier = config.init_from.get(
+  #         'classifier_type', 'token')
 
-    train_state = model.init_from_train_state(train_state, restored_train_state,
-                                              restored_model_cfg)
-    # Free unnecessary memory.
-    del restored_train_state
-  elif start_step == 0:
-    logging.info('Training completely from scratch.'
+  #   train_state = model.init_from_train_state(train_state, restored_train_state,
+  #                                             restored_model_cfg)
+  #   # Free unnecessary memory.
+  #   del restored_train_state
+  # elif start_step == 0:
+    
+  logging.info('Training completely from scratch.'
                  'Not restoring from any checkpoint.')
 
   # Replicate the optimzier, state, and rng.
