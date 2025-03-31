@@ -11,7 +11,7 @@ NUM_CLASSES = 174
 SSV2_TRAIN_SIZE = 68913
 SSV2_VAL_SIZE = 24777
 
-DATA_DIR = '/tmp/xirl/datasets/xmagical/train/gripper/'  # Set the data directory.
+DATA_DIR = '/home/lianniello/HOLD/drawer_dataset/closing_drawer/train/'  # Set the data directory.
 NUM_DEVICES = 1  # Set the number of devices.
 
 
