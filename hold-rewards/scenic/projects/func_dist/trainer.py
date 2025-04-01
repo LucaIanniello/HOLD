@@ -270,9 +270,9 @@ def train(
   valid_vid_ids = set()
   test_vid_ids = set()
   if debug:
-    traindir = os.path.join(workdir, 'train_inputs')
-    valdir = os.path.join(workdir, 'val_inputs')
-    testdir = os.path.join(workdir, 'test_inputs')
+    traindir = os.path.join(workdir, 'train')
+    valdir = os.path.join(workdir, 'eval')
+    testdir = os.path.join(workdir, 'test')
     for outdir in [traindir, valdir, testdir]:
       if not os.path.exists(outdir):
         os.makedirs(outdir)
