@@ -6,15 +6,22 @@ import json
 # Paths
 TRAIN_JSON = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/labels/train.json"
 EVAL_JSON = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/labels/evaluation.json"
+TEST_JSON = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/labels/test.json"  # New test set
 LABELS_JSON = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/labels/labels.json"
-TRAIN_VIDEO_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/train/video/"  # Train videos repository
-EVAL_VIDEO_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/eval/video/"    # Evaluation videos repository
-OUTPUT_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/tfrecords/"  # Output directory for TFRecords
+
+TRAIN_VIDEO_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/train/video/"
+EVAL_VIDEO_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/eval/video/"
+TEST_VIDEO_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/test/video/"  # Test videos repository
+OUTPUT_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/tfrecords/"
+
+# Filtering setting (set to None to disable filtering, or specify a label index to filter)
+FILTER_LABEL = 0  # Set to an integer like 0, 1, 2, ... or None to include all classes
 
 # Load label mapping
 with open(LABELS_JSON, "r") as f:
     label_map = json.load(f)  # {"opening a drawer":"0", "closing a drawer":"1", ...}
-    label_map = {k: int(v) for k, v in label_map.items()}  # Convert labels to integers
+    label_map = {k: int(v) for k, v in label_map.items()}  # Convert to integer labels
+    label_map_inv = {v: k for k, v in label_map.items()}  # Reverse mapping {0: "opening a drawer", ...}
 
 # Function to process a single video
 def video_to_tfrecord(video_path, label, writer):
@@ -43,21 +50,28 @@ def video_to_tfrecord(video_path, label, writer):
 
     writer.write(example.SerializeToString())
 
-# Function to process dataset (train or evaluation)
-def process_dataset(json_path, video_dir, output_tfrecord):
+# Function to process dataset (train, eval, or test)
+def process_dataset(json_path, video_dir, output_tfrecord, is_test=False):
     with open(json_path, "r") as f:
-        data = json.load(f)  # [{"id":"0001","label":"closing a drawer"}, ...]
+        data = json.load(f)  # [{"id":"0001","label":"closing a drawer"}, ...] (train/eval) or [{"id":"0001"}] (test)
 
     with tf.io.TFRecordWriter(output_tfrecord) as writer:
         for item in data:
             video_id = item["id"]
-            label_name = item["label"]
+            label_name = item.get("label", None)  # No label for test set
 
-            if label_name not in label_map:
-                print(f"Skipping unknown label: {label_name}")
-                continue
+            if not is_test:
+                if label_name not in label_map:
+                    print(f"Skipping unknown label: {label_name}")
+                    continue
+                label = label_map[label_name]  # Convert label name to integer
+                
+                # Apply label filtering (if enabled)
+                if FILTER_LABEL is not None and label != FILTER_LABEL:
+                    continue
+            else:
+                label = -1  # Assign a dummy label for test videos
 
-            label = label_map[label_name]  # Convert label name to integer
             video_path = os.path.join(video_dir, f"{video_id}.mp4")
 
             if os.path.exists(video_path):
@@ -65,6 +79,7 @@ def process_dataset(json_path, video_dir, output_tfrecord):
             else:
                 print(f"Missing video: {video_path}")
 
-# Process training and evaluation sets
+# Process training, evaluation, and test sets
 process_dataset(TRAIN_JSON, TRAIN_VIDEO_DIR, os.path.join(OUTPUT_DIR, "train.tfrecord"))
 process_dataset(EVAL_JSON, EVAL_VIDEO_DIR, os.path.join(OUTPUT_DIR, "eval.tfrecord"))
+process_dataset(TEST_JSON, TEST_VIDEO_DIR, os.path.join(OUTPUT_DIR, "test.tfrecord"), is_test=True)
