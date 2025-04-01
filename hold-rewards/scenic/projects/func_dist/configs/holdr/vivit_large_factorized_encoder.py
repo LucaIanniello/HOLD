@@ -27,11 +27,13 @@ def get_config():
   config.dataset_configs.base_dir = os.path.join(DATA_DIR, 'tfrecords/')
   config.dataset_configs.tables = {
       'train': 'train.tfrecord',
-      'validation': 'eval.tfrecord'
+      'validation': 'eval.tfrecord',
+      'test': 'test.tfrecord'
   }
   config.dataset_configs.examples_per_subset = {
       'train': SSV2_TRAIN_SIZE,
       'validation': SSV2_VAL_SIZE,
+      'test': SSV2_VAL_SIZE
   }
   config.dataset_configs.num_classes = NUM_CLASSES
   config.dataset_configs.included_tasks_path = None
