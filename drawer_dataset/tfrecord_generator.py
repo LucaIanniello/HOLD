@@ -16,7 +16,7 @@ TEST_VIDEO_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/test/video/" 
 OUTPUT_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/tfrecords/"
 
 IMAGE_SIZE = (224, 224)  # Standard frame size
-FRAME_SKIP = 2  # Extract every Nth frame
+FRAME_SKIP = 1  # Extract every Nth frame
 FILTER_LABEL = 0  # Set to integer (e.g., 0,1,2) or None for all
 
 # Load label mapping
@@ -24,46 +24,72 @@ with open(LABELS_JSON, "r") as f:
     label_map = json.load(f)
     label_map = {k: int(v) for k, v in label_map.items()}  # Convert to integer labels
 
-# --- Function to Process a Single Video ---
 def video_to_tfrecord(video_path, label, num_frames=None):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print(f"Error: Cannot open video {video_path}")
         return None
-    
+
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    frame_rate = cap.get(cv2.CAP_PROP_FPS) 
+    frame_rate = cap.get(cv2.CAP_PROP_FPS)
+    print(f"Processing video: {video_path}, Total frames: {total_frames}, Frame rate: {frame_rate}")
 
     frame_indices = np.linspace(0, total_frames - 1, total_frames, dtype=int)
-    frame_indices = frame_indices[::FRAME_SKIP]  # Skip frames based on the FRAME_SKIP value
+    frame_indices = frame_indices[::FRAME_SKIP]
+    print(f"Selected frame indices: {frame_indices}")
 
+    frame_count = 0
     frames = []
     timestamps = []
 
-    for i in frame_indices:
-        cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+    while True:
         ret, frame = cap.read()
         if not ret:
             break
-        frame = cv2.resize(frame, IMAGE_SIZE)  # Resize
-        _, buffer = cv2.imencode(".jpg", frame)  # Encode as JPEG
-        frames.append(buffer.tobytes())  # Store as bytes
-        timestamps.append(int(i))  # Save timestamp
+
+        if frame_count in frame_indices:
+            print(f"Processing frame {frame_count}")
+            frame = cv2.resize(frame, IMAGE_SIZE)
+            _, buffer = cv2.imencode(".jpg", frame)
+            if not _:
+                print(f"Warning: Encoding failure at frame {frame_count} in {video_path}")
+                continue
+            frames.append(buffer.tobytes())
+            timestamps.append(frame_count)
+
+        frame_count += 1
 
     cap.release()
 
-    # Create TFRecord Example
-    feature = {
+    if not frames:
+        print(f"No frames extracted from video {video_path}")
+        return None
+
+    print(f"Extracted {len(frames)} frames from video {video_path}")
+
+    # Define context features (single values)
+    context_features = {
         'data_path': tf.train.Feature(bytes_list=tf.train.BytesList(value=[video_path.encode()])),
         'image/frame_rate': tf.train.Feature(float_list=tf.train.FloatList(value=[frame_rate])),
-        'image/encoded': tf.train.Feature(bytes_list=tf.train.BytesList(value=frames)),
-        'image/timestamp': tf.train.Feature(int64_list=tf.train.Int64List(value=timestamps)),
         'task_label': tf.train.Feature(int64_list=tf.train.Int64List(value=[label]))
     }
 
-    example = tf.train.Example(features=tf.train.Features(feature=feature))
-    return example.SerializeToString()  # Return serialized TFRecord
+    # Define sequence features (lists of values)
+    sequence_features = {
+        'image/encoded': tf.train.FeatureList(feature=[
+            tf.train.Feature(bytes_list=tf.train.BytesList(value=[frame])) for frame in frames
+        ]),
+        'image/timestamp': tf.train.FeatureList(feature=[
+            tf.train.Feature(int64_list=tf.train.Int64List(value=[timestamp])) for timestamp in timestamps
+        ])
+    }
 
+    # Create a SequenceExample
+    example = tf.train.SequenceExample(
+        context=tf.train.Features(feature=context_features),
+        feature_lists=tf.train.FeatureLists(feature_list=sequence_features)
+    )
+    return example.SerializeToString()
 
 # --- Function to Process Dataset ---
 def process_dataset(json_path, video_dir, output_tfrecord, is_test=False, is_eval = False):
@@ -72,6 +98,7 @@ def process_dataset(json_path, video_dir, output_tfrecord, is_test=False, is_eva
 
     video_paths = []
     labels = []
+    
 
     for item in data:
         video_id = item["id"]

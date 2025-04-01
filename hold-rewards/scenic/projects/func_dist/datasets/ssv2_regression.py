@@ -31,7 +31,7 @@ Rng = Union[jnp.ndarray, Dict[str, jnp.ndarray]]
 
 def data_path_to_video_id(data_path):
   file_name = tf.strings.split(data_path, '/')[0, -1]
-  video_id_str = tf.strings.regex_replace(file_name, '.webm', '')
+  video_id_str = tf.strings.regex_replace(file_name, '.mp4', '')
   video_id = tf.strings.to_number(video_id_str, out_type=tf.int32)
   return video_id
 
