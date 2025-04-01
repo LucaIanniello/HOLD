@@ -3,7 +3,6 @@ import cv2
 import os
 import json
 import numpy as np
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Paths
 TRAIN_JSON = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/labels/train.json"
@@ -24,7 +23,6 @@ FILTER_LABEL = 0  # Set to integer (e.g., 0,1,2) or None for all
 with open(LABELS_JSON, "r") as f:
     label_map = json.load(f)
     label_map = {k: int(v) for k, v in label_map.items()}  # Convert to integer labels
-    label_map = {v: k for k, v in label_map.items()}  # Invert mapping for TFRecord
 
 # --- Function to Process a Single Video ---
 def video_to_tfrecord(video_path, label, num_frames=None):
@@ -34,13 +32,9 @@ def video_to_tfrecord(video_path, label, num_frames=None):
         return None
     
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    frame_rate = cap.get(cv2.CAP_PROP_FPS)
+    frame_rate = cap.get(cv2.CAP_PROP_FPS) 
 
-    # If num_frames is not provided, set it based on the video length
-    if num_frames is None:
-        num_frames = min(16, total_frames)  # Set to 16 or total_frames, whichever is smaller
-
-    frame_indices = np.linspace(0, total_frames - 1, num_frames, dtype=int)
+    frame_indices = np.linspace(0, total_frames - 1, total_frames, dtype=int)
     frame_indices = frame_indices[::FRAME_SKIP]  # Skip frames based on the FRAME_SKIP value
 
     frames = []
@@ -58,10 +52,6 @@ def video_to_tfrecord(video_path, label, num_frames=None):
 
     cap.release()
 
-    if len(frames) < num_frames // 2:
-        print(f"Warning: Not enough frames in {video_path}, skipping...")
-        return None  # Skip if too few frames
-
     # Create TFRecord Example
     feature = {
         'data_path': tf.train.Feature(bytes_list=tf.train.BytesList(value=[video_path.encode()])),
@@ -76,7 +66,7 @@ def video_to_tfrecord(video_path, label, num_frames=None):
 
 
 # --- Function to Process Dataset ---
-def process_dataset(json_path, video_dir, output_tfrecord, is_test=False, num_frames=None):
+def process_dataset(json_path, video_dir, output_tfrecord, is_test=False, is_eval = False):
     with open(json_path, "r") as f:
         data = json.load(f)
 
@@ -106,20 +96,18 @@ def process_dataset(json_path, video_dir, output_tfrecord, is_test=False, num_fr
         video_paths.append(video_path)
         labels.append(label)
 
-    # --- Parallel Processing ---
+    # --- Sequential Processing ---
     serialized_examples = []
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        future_to_video = {executor.submit(video_to_tfrecord, v, l, num_frames): v for v, l in zip(video_paths, labels)}
-        
-        for future in as_completed(future_to_video):
-            result = future.result()
-            if result is not None:
-                serialized_examples.append(result)
+    for video_path, label in zip(video_paths, labels):
+        result = video_to_tfrecord(video_path, label)
+        if result is not None:
+            serialized_examples.append(result)
 
     # --- Write TFRecords Sequentially ---
     with tf.io.TFRecordWriter(output_tfrecord) as writer:
         for example in serialized_examples:
             writer.write(example)
+
 
 # --- Process Datasets ---
 process_dataset(TRAIN_JSON, TRAIN_VIDEO_DIR, os.path.join(OUTPUT_DIR, "train.tfrecord"))
