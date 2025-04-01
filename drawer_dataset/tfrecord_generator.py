@@ -4,12 +4,12 @@ import os
 import json
 
 # Paths
-TRAIN_JSON = "/home/lianniello/Thesis/HOLD/drawer_dataset/labels/train.json"
-EVAL_JSON = "/home/lianniello/Thesis/HOLD/drawer_dataset/labels/evaluation.json"
-LABELS_JSON = "/home/lianniello/Thesis/HOLD/drawer_dataset/labels/labels.json"
-TRAIN_VIDEO_DIR = "/home/lianniello/Thesis/HOLD/drawer_dataset/train/video/"  # Train videos repository
-EVAL_VIDEO_DIR = "/home/lianniello/Thesis/HOLD/drawer_dataset/eval/video/"    # Evaluation videos repository
-OUTPUT_DIR = "/home/lianniello/Thesis/HOLD/drawer_dataset/tfrecords/"  # Output directory for TFRecords
+TRAIN_JSON = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/labels/train.json"
+EVAL_JSON = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/labels/evaluation.json"
+LABELS_JSON = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/labels/labels.json"
+TRAIN_VIDEO_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/train/video/"  # Train videos repository
+EVAL_VIDEO_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/eval/video/"    # Evaluation videos repository
+OUTPUT_DIR = "/home/lianniello/Hold_thesis/HOLD/drawer_dataset/tfrecords/"  # Output directory for TFRecords
 
 # Load label mapping
 with open(LABELS_JSON, "r") as f:
