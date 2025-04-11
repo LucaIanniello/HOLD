@@ -11,7 +11,7 @@ NUM_CLASSES = 174
 SSV2_TRAIN_SIZE = 68913
 SSV2_VAL_SIZE = 24777
 
-DATA_DIR = '/home/lianniello/Hold_thesis/HOLD/drawer_dataset/'  # Set the data directory.
+DATA_DIR = '/home/lianniello/Hold_thesis/SSv2/'  # Set the data directory.
 NUM_DEVICES = 1  # Set the number of devices.
 
 
@@ -24,7 +24,7 @@ def get_config():
   config.dataset_configs = ml_collections.ConfigDict()
   config.data_dtype_str = 'float32'
   config.dataset_name = 'ssv2_regression_tfrecord'
-  config.dataset_configs.base_dir = os.path.join(DATA_DIR, 'tfrecords/')
+  config.dataset_configs.base_dir = os.path.join(DATA_DIR, '20bn-something-something-v2/tfrecords/')
   config.dataset_configs.tables = {
       'train': 'something-something-v2-train.rgb.tfrecord-00000-of-00128',
       'validation': 'something-something-v2-train.rgb.tfrecord-00000-of-00128',
@@ -36,9 +36,9 @@ def get_config():
       'test': SSV2_VAL_SIZE
   }
   config.dataset_configs.num_classes = NUM_CLASSES
-  config.dataset_configs.included_tasks_path = None
-  config.dataset_configs.train_metadata_path = None
-  config.dataset_configs.validation_metadata_path = None
+  config.dataset_configs.included_tasks_path = os.path.join(DATA_DIR, 'labels/filtered_tasks.json')
+  config.dataset_configs.train_metadata_path = os.path.join(DATA_DIR, 'labels/train.json')
+  config.dataset_configs.validation_metadata_path = os.path.join(DATA_DIR, 'labels/validation.json')
 
   # This is going to sample 3 consecutive frames and a future goal frame.
   config.dataset_configs.num_frames = 4

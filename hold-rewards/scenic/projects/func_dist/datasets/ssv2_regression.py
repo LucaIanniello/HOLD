@@ -195,7 +195,7 @@ def load_split(
   """
   def filter_on_task(features_dict: Dict[str, tf.Tensor],
                      included_tasks: tf.Tensor) -> tf.Tensor:
-    label = tf.sparse.to_dense(features_dict['task_label'])
+    label = tf.sparse.to_dense(features_dict['label'])
     label_tile = tf.tile(label, [included_tasks.shape[0]])
     return tf.reduce_any(tf.equal(label_tile, included_tasks), -1)
 
