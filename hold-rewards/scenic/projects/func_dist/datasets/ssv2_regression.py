@@ -23,6 +23,9 @@ import tensorflow as tf
 
 from tensorflow.io import gfile
 
+import pdb
+import pprint
+
 
 # Aliases for custom types:
 Batch = Dict[str, jnp.ndarray]
@@ -240,6 +243,11 @@ def load_split(
                             drop_remainder=(subset == 'train'),
                             keep_key=(subset != 'train' and keep_key),
                             padded_batch=(subset == 'test' and batch_size > 1))
+  pdb.set_trace()
+  #Debugging: Print the shapes of features in the dataset
+  for data in ds.take(1):  # Inspect the first batch
+      for key, value in data.items():
+        tf.print(f"Feature: {key}, Shape: {tf.shape(value)}")
 
   options = tf.data.Options()
   options.threading.private_threadpool_size = 48

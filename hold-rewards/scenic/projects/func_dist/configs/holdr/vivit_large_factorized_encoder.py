@@ -26,9 +26,9 @@ def get_config():
   config.dataset_name = 'ssv2_regression_tfrecord'
   config.dataset_configs.base_dir = os.path.join(DATA_DIR, 'tfrecords/')
   config.dataset_configs.tables = {
-      'train': 'train.tfrecord',
-      'validation': 'eval.tfrecord',
-      'test': 'test.tfrecord'
+      'train': 'something-something-v2-train.rgb.tfrecord-00000-of-00128',
+      'validation': 'something-something-v2-train.rgb.tfrecord-00000-of-00128',
+      'test': 'something-something-v2-train.rgb.tfrecord-00000-of-00128'
   }
   config.dataset_configs.examples_per_subset = {
       'train': SSV2_TRAIN_SIZE,
