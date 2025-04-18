@@ -34,8 +34,8 @@ Rng = Union[jnp.ndarray, Dict[str, jnp.ndarray]]
 
 def data_path_to_video_id(data_path):
   file_name = tf.strings.split(data_path, '/')[0, -1]
-  video_id_str = tf.strings.regex_replace(file_name, '.mp4', '')
-  video_id = tf.strings.to_number(video_id_str, out_type=tf.int32)
+  video_id_str = tf.strings.regex_replace(file_name, '.webm', '')
+  video_id = tf.strings.to_number(video_id_str, out_type=tf.int64)
   return video_id
 
 
@@ -351,7 +351,7 @@ def get_dataset(
     n_validation_videos = count_included_videos(validation_videos_per_task,
                                                 included_tasks)
     # Keep task IDs only.
-    included_tasks = np.array([int(task) for task in included_tasks.values()])
+    included_tasks = np.array([int(task) for tasks in included_tasks.values() for task in tasks])
     logging.info('%d included tasks: %s',
                  len(included_tasks), str(included_tasks))
 
@@ -421,6 +421,14 @@ def get_dataset(
         train=is_training,
         batch_size=pad_batch_size)
     shard_batches = functools.partial(dataset_utils.shard, n_devices=num_shards)
+
+    for data in iter(dataset):
+      print("Raw data:", data)
+      data_numpy = dataset_utils.tf_to_numpy(data)
+      print("Converted to numpy:", data_numpy)
+      mapped = map_keys(data_numpy)
+      print("Mapped keys:", mapped)
+      break  # Only check one element
 
     current_ds_iterator = (
         map_keys(dataset_utils.tf_to_numpy(data)) for data in iter(dataset)

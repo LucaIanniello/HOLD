@@ -312,6 +312,7 @@ def train(
               f'({mean_target_secs} seconds)')
         print('Total number of videos', len(frame_rates_per_video))
     with jax.profiler.StepTraceContext('train', step_num=step):
+
       train_batch = next(dataset.train_iter)
       for video_id in train_batch['video_id'][0]:
           train_vid_ids.add(int(video_id))
